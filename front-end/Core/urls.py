@@ -8,8 +8,9 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('icons/', icon_view, name='icons'),
+    path('favorite/', favorite_view , name='fav'),
+    path('reccomender/', reccomender_view, name='rec'),
     
-    path('recommended/', recommended_view, name='recommended'),
     path('search/', search_view, name='search'),
     path('api/interaction/', user_interaction_api, name='user_interaction_api'),
 ]

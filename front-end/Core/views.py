@@ -22,6 +22,12 @@ def icon_view(request):
     # This view is for the icon functionality, which is not implemented yet
     return render(request, 'icons-boxicons.html')
 
+def favorite_view(request):
+    return render(request, 'favorite.html')
+
+def reccomender_view(request):
+    return render(request, 'reccomender.html')
+
 #This is the homepage functionality 
 def home_view(request):
     try:

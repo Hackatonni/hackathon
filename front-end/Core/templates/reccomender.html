@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 
 <html
@@ -15,7 +16,7 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
 
-    <title>Liked Articles</title>
+    <title>Reccomender</title>
 
     <meta name="description" content="" />
 
@@ -34,7 +35,6 @@
     <link rel="stylesheet" href="../assets/vendor/fonts/boxicons.css" />
 
     <!-- Core CSS -->
-    {% load static %}
     <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css"/>
     <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
     <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
@@ -76,12 +76,14 @@
                 <div data-i18n="Analytics">Home</div>
               </a>
             </li>
-            <li class="menu-item active">
+
+            <li class="menu-item">
               <a href="{% url 'icons' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-crown"></i>
                 <div data-i18n="Boxicons">Liked Articles</div>
               </a>
             </li>
+
             <li class="menu-item">
               <a href="{% url 'fav' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-crown"></i>
@@ -89,7 +91,7 @@
               </a>
             </li>
 
-            <li class="menu-item">
+            <li class="menu-item active">
               <a href="{% url 'rec' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-crown"></i>
                 <div data-i18n="Boxicons">Reccomender</div>
@@ -128,7 +130,6 @@
               </div>
               <!-- /Search -->
 
-              
               <ul class="navbar-nav flex-row align-items-center ms-auto">
 
                 <!-- User -->
@@ -205,10 +206,10 @@
                 <div class="col-lg-8">
                   <div class="card mb-4">
                     <div class="card-body">
-                      <h2 class="card-title">Liked Articles</h2>
+                      <h2 class="card-title">Reccomender</h2>
                       <p class="card-text">
-                        You will have here all the articles you have liked. You can click on any article to view its details.
-                      </p>
+                        Reccommended articles suggested based on your interests. Click on the article title to read more.
+                    </p>
                       <!-- Add more article fields/components here as needed -->
                     </div>
                   </div>
@@ -252,16 +253,5 @@
     </div>
     <!-- / Layout wrapper -->
 
-    <!-- Core JS -->
-    <!-- build:js assets/vendor/js/core.js -->
-    <script src="../assets/vendor/libs/jquery/jquery.js"></script>
-    <script src="../assets/vendor/libs/popper/popper.js"></script>
-    <script src="../assets/vendor/js/bootstrap.js"></script>
-    <script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-    <script src="../assets/vendor/js/menu.js"></script>
-    <!-- endbuild -->
-
-    <!-- Main JS -->
-    <script src="../assets/js/main.js"></script>
   </body>
 </html>
