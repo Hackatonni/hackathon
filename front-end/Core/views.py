@@ -254,7 +254,7 @@ def login_view(request):
                     messages.success(request, 'Login Successful !')
                     print(f"{username} logged in")
                     
-                    return redirect('home')
+                    return redirect('/home')
             messages.error(request, 'Invalid username or password')
     except Exception as e:
         print(f"this is an issue with {e}")
