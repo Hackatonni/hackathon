@@ -293,17 +293,7 @@ def description_to_code(description):
             if desc == description:
                 return sub_code
 
-def get_codes_from_raw_topics(raw_topics):
-    with open("user_registration_info.json", "r") as f:
-        json_data = json.load(f)
-    macro_area = json_data[0]["topics"]
-    sub_area = json_data[0]["subtopics"]
-    topics = []
-    for area in macro_area:
-        topics.append(description_to_code(area))
-    for area in sub_area:
-        topics.append(description_to_code(area))
-    return topics
+
 
 import os, json
 if __name__ == "__main__":
@@ -313,7 +303,7 @@ if __name__ == "__main__":
     with open('user_registration_info.json', 'r') as f:
         user_registration_info = json.load(f)
         raw_topics = user_registration_info['topics']
-        topics_codes = get_codes_from_raw_topics(raw_topics)
+        topics_codes = code_to_description(raw_topics)
         registration_samples = extract_samples(topics_codes, n_samples=2)
         # write the user interests to a file
         with open('registration_samples.json', 'w') as f:
