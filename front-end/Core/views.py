@@ -8,6 +8,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 
 
 
@@ -18,7 +19,7 @@ INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 
 #This is the homepage functionality 
-
+@login_required(login_url='login/')
 def home_view(request):
     try:
         with open(ARTICLE_PATH, 'r') as f:
