@@ -19,7 +19,6 @@ INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 
 #This is the homepage functionality 
-@login_required(login_url='login/')
 def home_view(request):
     try:
         with open(ARTICLE_PATH, 'r') as f:

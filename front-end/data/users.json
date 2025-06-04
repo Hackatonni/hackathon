@@ -15,5 +15,20 @@
             "ai",
             "genetics"
         ]
+    },
+    {
+        "name": "Lebbie",
+        "surname": "Lebbie",
+        "username": "Lebbie",
+        "status": "professor",
+        "company": "Lebbie",
+        "password": "pbkdf2_sha256$1000000$uAdsPX6ZMSB83rB6TJtByW$DLCxg3Fbg81PLK3bUy2YXqhBZzbdId01Oedq7Xfvhys=",
+        "age": 32,
+        "topics": [
+            "biology"
+        ],
+        "subtopics": [
+            "genetics"
+        ]
     }
 ]
