@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid">
+  <div class="row">
+
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 sidebar d-flex flex-column">
+      <h5>👋 Welcome, {{ request.session.user|default:"Guest" }}</h5>
+      <p><strong>Your Interests:</strong></p>
+      <div>
+        {% for interest in request.session.user_interests %}
+          <span class="interest-tag">{{ interest }}</span>
+        {% empty %}
+          <p class="text-muted">No interests selected yet.</p>
+        {% endfor %}
+      </div>
+      <a href="{% url 'logout' %}" class="logout-btn mt-auto align-self-start">Logout</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="col-md-9 col-lg-10 p-4">
+      <div class="header-bar">
+        <h2>📰 Articles Curated For You</h2>
+        <a href="{% url 'recommended' %}" class="btn btn-primary-custom">See All Recommendations</a>
+      </div>
+
+      <div class="header-bar">
+        <a href="{% url 'logout' %}" class="btn btn-primary-custom">logout</a>
+      </div>
+
+      {% comment %} {% if articles %}
+        <div>
+          {% for article in articles %}
+            <a href="{% url 'article_detail' article.id %}" class="article-card d-block text-decoration-none article-link" data-article-id="{{ article.id }}">
+              <h3 class="article-title">{{ article.title }}</h3>
+              <p class="article-abstract">{{ article.abstract }}</p>
+              <small class="text-muted">
+                {{ article.authors|join:", " }} • {{ article.year }}
+              </small>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info" role="alert">
+          No articles found. Set your interests to get personalized articles here!
+        </div>
+      {% endif %} {% endcomment %}
+      {% for article in articles %}
+        <div class="article-card d-block text-decoration-none mb-4 p-3 border rounded shadow-sm">
+            <a href="{% url 'article_detail' article.id %}" 
+            class="d-block text-decoration-none article-link" 
+            data-article-id="{{ article.id }}">
+            <h3 class="article-title">{{ article.title }}</h3>
+            <p class="article-abstract">{{ article.abstract|truncatechars:100 }}</p>
+            <small class="text-muted">
+                {{ article.authors|join:", " }} • {{ article.year }}
+            </small>
+            </a>
+
+            <div class="mt-2 d-flex gap-3">
+                <button class="btn btn-outline-primary btn-sm like-btn" data-article-id="{{ article.id }}">
+                    <span class="like-icon">🤍</span> Like
+                </button>
+                <button class="btn btn-outline-warning btn-sm favorite-btn" data-article-id="{{ article.id }}">
+                    <span class="favorite-icon">⭐</span> Favorite
+                </button>
+            </div>
+
+        </div>
+    {% endfor %}
+
+    </main>
+
+  </div>
+</div>
+
+ {% comment %} <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const articleLinks = document.querySelectorAll(".article-link");
+
+        articleLinks.forEach(link => {
+            link.addEventListener("click", function (e) {
+                const username = "{{ request.session.user|default:'' }}";  // or however you store it
+                const articleId = this.dataset.articleId;
+
+                fetch("{% url 'user_interaction_api' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        action: "clicks",
+                        value: articleId
+                    })
+                });
+            });
+        });
+    });
+</script>  {% endcomment %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const username = "{{ request.session.user|default:'' }}";
+    if (!username) {
+        console.warn('No username found in session; interactions will not be tracked.');
+        return; // no point continuing without username
+    }
+
+    function sendInteraction(action, value) {
+        fetch("{% url 'user_interaction_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                username: username,
+                action: action,
+                value: value
+            })
+        }).catch(e => console.error('Interaction error:', e));
+    }
+
+    // Track clicks on article links
+    const articleLinks = document.querySelectorAll(".article-link");
+    articleLinks.forEach(link => {
+        link.addEventListener("click", function () {
+            const articleId = this.dataset.articleId;
+            sendInteraction("clicks", articleId);
+        });
+    });
+
+    // Like button toggle
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const articleId = btn.dataset.articleId;
+            const icon = btn.querySelector('.like-icon');
+
+            if (btn.classList.contains('btn-primary')) {
+                // Already liked → unlike
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+                icon.textContent = '🤍';
+                sendInteraction('unlike', articleId);
+            } else {
+                // Like it
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-outline-primary');
+                icon.textContent = '❤️';
+                sendInteraction('likes', articleId);
+            }
+        });
+    });
+
+    // Favorite button toggle
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const articleId = btn.dataset.articleId;
+            const icon = btn.querySelector('.favorite-icon');
+
+            if (btn.classList.contains('btn-warning')) {
+                // Already favorited → unfavorite
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-outline-warning');
+                icon.textContent = '⭐';
+                sendInteraction('unfavorite', articleId);
+            } else {
+                // Favorite it
+                btn.classList.add('btn-warning');
+                btn.classList.remove('btn-outline-warning');
+                icon.textContent = '🌟';
+                sendInteraction('favorites', articleId);
+            }
+        });
+    });
+
+    // Time spent tracking on single article page (optional)
+    const articleId = "{{ article.id|default:'' }}";
+    if (articleId) {
+        let secondsSpent = 0;
+        setInterval(() => {
+            secondsSpent += 10;
+            sendInteraction('time_spent', { article_id: articleId, seconds: secondsSpent });
+            secondsSpent = 0; // reset after sending
+        }, 10000);  // every 10 seconds
+    }
+});
+</script>
+
+{% comment %} {% comment %} <script>
+  const username = "{{ request.session.user }}";  // or however you store it
+
+  function sendInteraction(action, value) {
+    fetch('/api/interaction/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify({ username, action, value })
+    });
+  }
+
+  // Track article click
+  document.querySelectorAll('.article-link').forEach(link => {
+    link.addEventListener('click', () => {
+      const articleId = link.dataset.articleId;
+      sendInteraction('clicks', articleId);
+    });
+  });
+
+  // Track likes
+  function likeArticle(articleId) {
+    sendInteraction('likes', articleId);
+  }
+
+  // Track favorites
+  function favoriteArticle(articleId) {
+    sendInteraction('favorites', articleId);
+  }
+
+  // Track time spent (every 10 seconds)
+  let currentArticleId = "{{ article.id|default:'' }}";  // dynamically set this on article detail page
+  let timeSpent = 0;
+
+  if (currentArticleId) {
+    setInterval(() => {
+      timeSpent += 10;
+      sendInteraction('time_spent', { article_id: currentArticleId, duration: 10 });
+    }, 10000);
+  }
+</script>  {% endcomment %}
+
+
+
+
+{% endblock %}
