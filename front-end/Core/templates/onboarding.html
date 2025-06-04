@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Article Review{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  {% if article %}
+    <div id="article-card" class="card shadow-lg p-4">
+      <div class="card-body">
+        <h5 class="card-title">{{ article.title }}</h5>
+        <p class="card-text">{{ article.content }}</p>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-danger" onclick="submitResponse('not_interested')">Not Interested</button>
+          <button class="btn btn-success" onclick="submitResponse('interested')">Interested</button>
+        </div>
+        <div class="text-end mt-3">
+          <small class="text-muted">Progress: {{ progress }}/{{ total }}</small>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center">
+      <h4>🎉 Done reviewing!</h4>
+      <p>Please wait a bit while your preferences are loading...</p>
+    </div>
+    <script>
+      setTimeout(() => {
+        window.location.href = "{% url 'home' %}";
+      }, 3000);
+    </script>
+  {% endif %}
+</div>
+
+<script>
+function submitResponse(response) {
+    fetch('/onboarding-response/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            username: "{{ request.session.user }}",
+            article_id: "{{ progress }}",
+            response: response
+        })
+    }).then(res => res.json())
+      .then(data => {
+        if (data.status === 'recorded') {
+            // Animate card exit then reload
+            const card = document.getElementById('article-card');
+            card.classList.add('fade-out');
+            setTimeout(() => location.reload(), 300);
+        }
+    });
+}
+</script>
+
+<style>
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+</style>
+{% endblock %}

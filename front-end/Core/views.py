@@ -10,33 +10,84 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from . forms import *
-
+from django.http import JsonResponse
 
 
 DATA_PATH = os.path.join('data', 'users.json')
 ARTICLE_PATH = os.path.join('data', 'articles.json')
+RECOMMENDATION_PATH = os.path.join('data', '_recommendations.json')
+
+
+ONBOARDING_RESPONSES_PATH = os.path.join('data', 'onboarding_responses.json')
 
 INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 
 #This is the homepage functionality 
 # @login_required(login_url='login/')
+# def home_view(request):
+#     try:
+#         with open(ARTICLE_PATH, 'r') as f:
+#             article = json.load(f)
+#     except Exception:
+#         article = []
+    
+#     if 'user' not in request.session:
+#         request.session['user'] = 'DemoUser'
+        
+#     article_to_view = article[:3]    
+    
+#     context = {
+#         'articles' : article_to_view
+#     }
+#     return render(request, 'home.html', context)
+
+
+
 def home_view(request):
+    username = request.session.get('user', 'DemoUser')
+    
+    try:
+        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+            preferences = json.load(f).get(username, [])
+        liked_ids = [p['article_id'] for p in preferences if p['response'] == 'interested']
+    except:
+        liked_ids = []
+
     try:
         with open(ARTICLE_PATH, 'r') as f:
-            article = json.load(f)
-    except Exception:
-        article = []
-    
-    if 'user' not in request.session:
-        request.session['user'] = 'DemoUser'
-        
-    article_to_view = article[:3]    
+            all_articles = json.load(f)
+    except:
+        all_articles = []
+
+    personalized = [a for a in all_articles if a['id'] in liked_ids]
+    default = all_articles[:3]
     
     context = {
-        'articles' : article_to_view
+        'articles': personalized if personalized else default
     }
     return render(request, 'home.html', context)
+
+
+def has_completed_onboarding(username):
+    if not os.path.exists(ONBOARDING_RESPONSES_PATH):
+        return False
+
+    try:
+        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+            responses = json.load(f)
+        user_responses = responses.get(username, [])
+    except:
+        return False
+
+    rec_file = os.path.join('data', f"{username}_recommendations.json")
+    if not os.path.exists(rec_file):
+        return False
+
+    with open(rec_file, 'r') as f:
+        articles = json.load(f)
+
+    return len(user_responses) >= len(articles)
 
 
 #the function to view articles in details
@@ -139,14 +190,183 @@ def signup_view(request):
             users.append(new_user)
             with open(DATA_PATH, 'w') as f:
                 json.dump(users, f, indent=4)
+                
+            # After saving user
+            ai_output_file = os.path.join('data', f"{new_user['username']}_recommendations.json")
 
-            messages.success(request, "Account created Successfully")
-            return redirect('login')
+            # Simulate AI team sending 20 articles
+            try:
+                with open(RECOMMENDATION_PATH, 'r') as f:
+                    all_articles = json.load(f)
+                selected_articles = all_articles[:10]  # Simulate AI's pick
+                with open(ai_output_file, 'w') as f:
+                    json.dump(selected_articles, f, indent=4)
+            except Exception as e:
+                print(f"Error during AI simulation: {e}")
+
+            request.session['user'] = new_user['username']
+            return redirect('onboarding', username=new_user['username'])
+            # messages.success(request, "Account created Successfully")
+            # return redirect('login')
 
     else:
         form = SingupForm()
 
     return render(request, 'registration/signup.html', {'form': form})
+
+# @login_required(login_url='login/')
+# def onboarding_view(request, username):
+#     user = request.session.get('user')
+#     if user != username:
+#         return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+#     rec_file = os.path.join('data', f"{username}_recommendations.json")
+#     if not os.path.exists(rec_file):
+#         return JsonResponse({'error': 'Recommendations not found'}, status=404)
+
+#     with open(rec_file, 'r') as f:
+#         articles = json.load(f)
+
+#     # Load current progress
+#     try:
+#         with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+#             responses = json.load(f)
+#     except:
+#         responses = {}
+
+#     user_responses = responses.get(username, [])
+#     current_index = len(user_responses)
+
+#     if current_index >= len(articles):
+#         return redirect('home')
+
+#     article = articles[current_index]
+#     return render(request, 'onboarding.html', {'article': article, 'progress': current_index, 'total': len(articles)})
+
+def onboarding_view(request, username):
+    user = request.session.get('user')
+    if user != username:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    rec_file = os.path.join('data', f"{username}_recommendations.json")
+    if not os.path.exists(rec_file):
+        return JsonResponse({'error': 'Recommendations not found'}, status=404)
+
+    try:
+        # with open(rec_file, 'r') as f:
+        #     articles = json.load(f)
+        #     print("=== DEBUG: articles ===", type(articles), articles)
+        #     if isinstance(articles, dict):
+        #         articles = list(articles.values())
+        # if not isinstance(articles, list) or not articles:
+        #     return JsonResponse({'error': 'No valid recommendations found.'}, status=500)
+        with open(rec_file, 'r') as f:
+            articles = json.load(f)
+            if isinstance(articles, dict):
+                articles = list(articles.values())  # fix malformed structure
+            if not isinstance(articles, list) or not articles:
+                return JsonResponse({'error': 'No valid recommendations found.'}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to load recommendations: {str(e)}'}, status=500)
+
+    # Load current progress
+    try:
+        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+            responses = json.load(f)
+    except:
+        responses = {}
+
+    user_responses = responses.get(username, [])
+    current_index = len(user_responses)
+
+    if current_index >= len(articles):
+        return redirect('home')
+
+    try:
+        article = articles[current_index]
+    except IndexError:
+        return JsonResponse({'error': 'Index out of range while accessing recommendations.'}, status=500)
+
+    return render(request, 'onboarding.html', {
+        'article': article,
+        'progress': current_index,
+        'total': len(articles)
+    })
+
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def onboarding_response_view(request):
+#     data = json.loads(request.body)
+#     username = data.get('username')
+#     article_id = data.get('article_id')
+#     response = data.get('response')  # interested / not_interested
+
+#     if not username or not article_id or not response:
+#         return JsonResponse({'error': 'Incomplete data'}, status=400)
+
+#     if not os.path.exists(ONBOARDING_RESPONSES_PATH):
+#         with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+#             json.dump({}, f)
+
+#     with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+#         responses = json.load(f)
+
+#     if username not in responses:
+#         responses[username] = []
+
+#     responses[username].append({
+#         'article_id': article_id,
+#         'response': response
+#     })
+
+#     with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+#         json.dump(responses, f, indent=4)
+
+#     return JsonResponse({'status': 'recorded'})
+
+def onboarding_response_view(request):
+    try:
+        data = json.loads(request.body)
+        username = data.get('username')
+        article_id = data.get('article_id')
+        response = data.get('response')  # "interested" or "not_interested"
+
+        if not username or not article_id or not response:
+            return JsonResponse({'error': 'Incomplete data'}, status=400)
+
+        # Ensure the data folder exists
+        os.makedirs(os.path.dirname(ONBOARDING_RESPONSES_PATH), exist_ok=True)
+
+        # If file doesn't exist or is empty, initialize it
+        if not os.path.exists(ONBOARDING_RESPONSES_PATH) or os.path.getsize(ONBOARDING_RESPONSES_PATH) == 0:
+            with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+                json.dump({}, f)
+
+        # Load existing responses safely
+        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+            try:
+                responses = json.load(f)
+            except json.JSONDecodeError:
+                responses = {}
+
+        # Update the user's response
+        if username not in responses:
+            responses[username] = []
+
+        responses[username].append({
+            'article_id': article_id,
+            'response': response
+        })
+
+        # Save back
+        with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+            json.dump(responses, f, indent=4)
+
+        return JsonResponse({'status': 'recorded'})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 #the user interaction form 
@@ -255,7 +475,9 @@ def login_view(request):
                     messages.success(request, 'Login Successful !')
                     print(f"{username} logged in")
                     
-                    return redirect('/home')
+                    if not has_completed_onboarding(username):
+                        return redirect('onboarding', username=username)
+                    return redirect('home')
             messages.error(request, 'Invalid username or password')
     except Exception as e:
         print(f"this is an issue with {e}")
@@ -310,3 +532,6 @@ def upload_article_view(request):
         form = ArticleUploadForm()
 
     return render(request, 'upload_article.html', {'form': form})
+
+
+

@@ -9,6 +9,11 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     
     path('upload/', upload_article_view, name='upload_article'),
+    # path('onboarding/<str:username>/', onboarding_view, name='onboarding'),
+    
+    path('onboarding/<str:username>/', onboarding_view, name='onboarding'),
+    path('onboarding-response/', onboarding_response_view, name='onboarding_response'),
+
     
     path('recommended/', recommended_view, name='recommended'),
     path('search/', search_view, name='search'),

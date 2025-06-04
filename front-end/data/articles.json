@@ -25,5 +25,32 @@
     "year": 2025,
     "tags": ["Quantum Computing", "Cryptography"],
     "pdf_path": "/media/papers/quantum_cryptography.pdf"
+  },
+   {
+    "id": 4,
+    "title": "Deep Learning Advances in Computer Vision",
+    "abstract": "This paper explores the latest deep learning architectures improving object detection and segmentation tasks in computer vision...",
+    "authors": ["Alice Smith", "Bob Johnson"],
+    "year": 2024,
+    "tags": ["Deep Learning", "Computer Vision", "AI"],
+    "pdf_path": "/media/papers/deep_learning_cv.pdf"
+  },
+  {
+    "id": 5,
+    "title": "Efficient Algorithms for Large-Scale Graph Processing",
+    "abstract": "We introduce novel parallel algorithms that significantly reduce runtime for processing large-scale graphs...",
+    "authors": ["John Doe"],
+    "year": 2023,
+    "tags": ["Algorithms", "Graph Processing", "Parallel Computing"],
+    "pdf_path": "/media/papers/graph_algorithms.pdf"
+  },
+  {
+    "id": 6,
+    "title": "Quantum Computing: The Future of Cryptography",
+    "abstract": "An overview of how quantum computing disrupts traditional cryptography and the emerging quantum-safe protocols...",
+    "authors": ["Jane Roe"],
+    "year": 2025,
+    "tags": ["Quantum Computing", "Cryptography"],
+    "pdf_path": "/media/papers/quantum_cryptography.pdf"
   }
 ]
