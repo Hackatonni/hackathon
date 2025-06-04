@@ -113,10 +113,12 @@ def signup_view(request):
         form = SingupForm(request.POST)
         if form.is_valid():
             new_user = form.cleaned_data
-            
-            ### load exixting users
+
             with open(DATA_PATH, 'r') as f:
-                users = json.load(f)
+                try:
+                    users = json.load(f)
+                except json.JSONDecodeError:
+                    users = []
                 
             ### check for nicename uniqueness 
             if any(u['username'] == new_user['username'] for u in users):
@@ -128,8 +130,11 @@ def signup_view(request):
             new_user['password'] = make_password(new_user['password'])
             ## Save user
             users.append(new_user)
-            with open(DATA_PATH, 'w') as f:
-                json.dump(users, f, indent=4)
+            # with open(DATA_PATH, 'w') as f:
+            #     json.dump(users, f, indent=4)
+            if not os.path.exists(DATA_PATH):
+                with open(DATA_PATH, 'w') as f:
+                    json.dump([], f)
                 
             messages.success(request, "Account created Successfully")
             return redirect('login')
@@ -138,6 +143,7 @@ def signup_view(request):
         form = SingupForm()
             
     return render(request, 'registration/signup.html', {'form': form })
+
 
 #the user interaction form 
 @csrf_exempt
