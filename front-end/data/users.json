@@ -1,0 +1,19 @@
+[
+    {
+        "name": "er",
+        "surname": "er",
+        "username": "er",
+        "status": "student",
+        "company": "er",
+        "password": "pbkdf2_sha256$1000000$4foaKUNjmW6WyQS6MufVis$3qLALjhDzr2gpw9Yde7/pgHqMONvBettC3o3HmsEbfQ=",
+        "age": 23,
+        "topics": [
+            "medicine",
+            "informatics"
+        ],
+        "subtopics": [
+            "ai",
+            "genetics"
+        ]
+    }
+]
