@@ -1,3 +1,43 @@
-* db.sqlite
-*gitignore
-*migrations
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environment
+venv/
+venev/
+env/
+.venv/
+.env/
+ENV/
+
+# Django migration files
+*/migrations/*.py
+*/migrations/*.pyc
+*/migrations/__pycache__/
+
+# SQLite or other local databases
+*.sqlite3
+*.db
+
+# Django secrets
+*.env
+.env.*
+
+# User-uploaded files & JSON-based data
+*.json
+
+# Logs
+*.log
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+#
