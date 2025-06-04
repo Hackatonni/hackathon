@@ -114,35 +114,38 @@ def signup_view(request):
         if form.is_valid():
             new_user = form.cleaned_data
 
+            # Ensure the file exists before reading
+            if not os.path.exists(DATA_PATH):
+                with open(DATA_PATH, 'w') as f:
+                    json.dump([], f)
+
+            # Load users safely
             with open(DATA_PATH, 'r') as f:
                 try:
                     users = json.load(f)
                 except json.JSONDecodeError:
                     users = []
-                
-            ### check for nicename uniqueness 
+
+            # Check for username uniqueness
             if any(u['username'] == new_user['username'] for u in users):
-                messages.error(request, "Username is already exists!")
-                return render(request, 'registration/signup.html', {'form':form})
-            
-            #hashed the password
-            
+                messages.error(request, "Username already exists!")
+                return render(request, 'registration/signup.html', {'form': form})
+
+            # Hash password
             new_user['password'] = make_password(new_user['password'])
-            ## Save user
+
+            # Save new user
             users.append(new_user)
-            # with open(DATA_PATH, 'w') as f:
-            #     json.dump(users, f, indent=4)
-            if not os.path.exists(DATA_PATH):
-                with open(DATA_PATH, 'w') as f:
-                    json.dump([], f)
-                
+            with open(DATA_PATH, 'w') as f:
+                json.dump(users, f, indent=4)
+
             messages.success(request, "Account created Successfully")
             return redirect('login')
-        
+
     else:
         form = SingupForm()
-            
-    return render(request, 'registration/signup.html', {'form': form })
+
+    return render(request, 'registration/signup.html', {'form': form})
 
 
 #the user interaction form 
