@@ -18,6 +18,10 @@ ARTICLE_PATH = os.path.join('data', 'articles.json')
 INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 
+def icon_view(request):
+    # This view is for the icon functionality, which is not implemented yet
+    return render(request, 'icons-boxicons.html')
+
 #This is the homepage functionality 
 def home_view(request):
     try:
