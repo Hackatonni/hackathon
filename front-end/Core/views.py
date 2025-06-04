@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from . forms import *
 
 
 
@@ -19,7 +20,7 @@ INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 
 #This is the homepage functionality 
-@login_required(login_url='login/')
+# @login_required(login_url='login/')
 def home_view(request):
     try:
         with open(ARTICLE_PATH, 'r') as f:
@@ -264,3 +265,48 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+
+@login_required(login_url='login/')
+def upload_article_view(request):
+    if request.method == 'POST':
+        form = ArticleUploadForm(request.POST)
+        if form.is_valid():
+            # Load existing articles
+            if not os.path.exists(ARTICLE_PATH):
+                with open(ARTICLE_PATH, 'w') as f:
+                    json.dump([], f)
+
+            with open(ARTICLE_PATH, 'r') as f:
+                try:
+                    articles = json.load(f)
+                except json.JSONDecodeError:
+                    articles = []
+
+            # Create new article entry
+            new_id = max([a['id'] for a in articles], default=0) + 1
+            username = request.session.get('user', 'anonymous')
+            tags = [tag.strip() for tag in form.cleaned_data['tags'].split(',')]
+
+            new_article = {
+                'id': new_id,
+                'title': form.cleaned_data['title'],
+                'abstract': form.cleaned_data['abstract'],
+                'content': form.cleaned_data['content'],
+                'tags': tags,
+                'author': username,
+                'timestamp': timezone.now().isoformat()
+            }
+
+            # Save article
+            articles.append(new_article)
+            with open(ARTICLE_PATH, 'w') as f:
+                json.dump(articles, f, indent=4)
+
+            messages.success(request, "Article uploaded successfully!")
+            return redirect('home')
+    else:
+        form = ArticleUploadForm()
+
+    return render(request, 'upload_article.html', {'form': form})

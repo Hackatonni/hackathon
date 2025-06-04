@@ -7,7 +7,6 @@ STATUS_CHOICES= [
     ('research', 'Research'),
     ('professor', 'Professor'),
     ('student', 'Student'),
-    ('other', 'Other')
 ]
 
 TOPIC_CHOICES = [
@@ -36,3 +35,9 @@ class SingupForm(forms.Form):
     age = forms.IntegerField(required=False)
     topics = forms.MultipleChoiceField(choices=TOPIC_CHOICES, widget=forms.CheckboxSelectMultiple)
     subtopics = forms.MultipleChoiceField(choices=SUBTOPIC_CHOICES, widget=forms.CheckboxSelectMultiple)
+
+class ArticleUploadForm(forms.Form):
+    title = forms.CharField(max_length=255)
+    abstract = forms.CharField(widget=forms.Textarea)
+    content = forms.CharField(widget=forms.Textarea)
+    tags = forms.CharField(help_text="Comma-separated tags (e.g., AI, Robotics, Research)")
