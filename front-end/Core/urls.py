@@ -11,6 +11,6 @@ urlpatterns = [
     path('recommended/', recommended_view, name='recommended'),
     path('search/', search_view, name='search'),
     path('api/interaction/', user_interaction_api, name='user_interaction_api'),
-
-    
 ]
+
+APPEND_SLASH = False
