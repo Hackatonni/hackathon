@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     #Added the core app
-    'Core.apps.CoreConfig',
+    'Core',
     
     'crispy_forms',
     'crispy_bootstrap5',
@@ -69,7 +69,7 @@ ROOT_URLCONF = 'main_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR / 'Core' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
