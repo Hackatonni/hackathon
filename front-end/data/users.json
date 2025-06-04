@@ -37,17 +37,17 @@
         "name": "am",
         "surname": "am",
         "username": "am",
-        "status": "professor",
+        "status": "student",
         "company": "ew",
-        "password": "pbkdf2_sha256$1000000$KrTBb9SVwj1cgeTQIteBrL$D56taPWscXfqfmNB9wKt48rOPCg5ZpuyMB5H6cJPhXM=",
+        "password": "pbkdf2_sha256$1000000$wZFSPdZV4B2ncvXr7ntoWL$bV/znpjaFvizMgAK+6YuE4lddf0NmuSYK2RonlxAFWA=",
         "age": 12,
         "topics": [
             "medicine",
             "informatics"
         ],
         "subtopics": [
-            "cybersecurity",
-            "robotics"
+            "ai",
+            "genetics"
         ]
     }
 ]

@@ -157,25 +157,6 @@
           <button class="btn btn-success" id="uploadBtn">➕ Upload Document</button>
         </div>
 
-        
-
-      {% comment %} {% if articles %}
-        <div>
-          {% for article in articles %}
-            <a href="{% url 'article_detail' article.id %}" class="article-card d-block text-decoration-none article-link" data-article-id="{{ article.id }}">
-              <h3 class="article-title">{{ article.title }}</h3>
-              <p class="article-abstract">{{ article.abstract }}</p>
-              <small class="text-muted">
-                {{ article.authors|join:", " }} • {{ article.year }}
-              </small>
-            </a>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="alert alert-info" role="alert">
-          No articles found. Set your interests to get personalized articles here!
-        </div>
-      {% endif %} {% endcomment %}
       {% for article in articles %}
         <div class="article-card d-block text-decoration-none mb-4 p-3 border rounded shadow-sm">
             <a href="{% url 'article_detail' article.id %}" 
@@ -189,12 +170,19 @@
             </a>
 
             <div class="mt-2 d-flex gap-3">
-                <button class="btn btn-outline-primary btn-sm like-btn" data-article-id="{{ article.id }}">
+                {% comment %} <button class="btn btn-outline-primary btn-sm like-btn" data-article-id="{{ article.id }}">
                     <span class="like-icon">🤍</span> Like
                 </button>
                 <button class="btn btn-outline-warning btn-sm favorite-btn" data-article-id="{{ article.id }}">
                     <span class="favorite-icon">⭐</span> Favorite
-                </button>
+                </button> {% endcomment %}
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                  <button class="btn btn-outline-primary btn-sm" onclick="react('click', '{{ article.id }}')">👆 Click</button>
+                  <button class="btn btn-outline-success btn-sm" onclick="react('like', '{{ article.id }}')">❤️ Like</button>
+                  <button class="btn btn-outline-danger btn-sm" onclick="react('dislike', '{{ article.id }}')">👎 Dislike</button>
+                  <button class="btn btn-outline-warning btn-sm" onclick="react('favourite', '{{ article.id }}')">🌟 Favourite</button>
+                </div>
+
             </div>
 
         </div>
@@ -232,16 +220,37 @@
 </script>  {% endcomment %}
 
 <script>
+  const username = "{{ request.session.user|default:'' }}";
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function react(action, articleId) {
+    if (!username) {
+      alert('You must be logged in to react.');
+      return;
+    }
 
-  });
+    fetch("{% url 'user_interaction_api' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({
+        username: username,
+        article_id: articleId,
+        action: action
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log(`${action} recorded:`, data))
+    .catch(err => console.error(`Failed to ${action}:`, err));
+  }
+
 
 
 document.addEventListener("DOMContentLoaded", function () {
 
     //for opening the page::::
-    
+
     const uploadBtn = document.getElementById("uploadBtn");
     const uploadModal = document.getElementById("uploadModal");
     const closeModalBtn = document.getElementById("closeModalBtn");
@@ -260,8 +269,6 @@ document.addEventListener("DOMContentLoaded", function () {
         uploadModal.style.display = "none";
       }
     });
-
-
 
 
     const username = "{{ request.session.user|default:'' }}";
@@ -286,70 +293,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Track clicks on article links
-    const articleLinks = document.querySelectorAll(".article-link");
-    articleLinks.forEach(link => {
-        link.addEventListener("click", function () {
-            const articleId = this.dataset.articleId;
-            sendInteraction("clicks", articleId);
-        });
-    });
-
-    // Like button toggle
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const articleId = btn.dataset.articleId;
-            const icon = btn.querySelector('.like-icon');
-
-            if (btn.classList.contains('btn-primary')) {
-                // Already liked → unlike
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-outline-primary');
-                icon.textContent = '🤍';
-                sendInteraction('unlike', articleId);
-            } else {
-                // Like it
-                btn.classList.add('btn-primary');
-                btn.classList.remove('btn-outline-primary');
-                icon.textContent = '❤️';
-                sendInteraction('likes', articleId);
-            }
-        });
-    });
-
-    // Favorite button toggle
-    document.querySelectorAll('.favorite-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const articleId = btn.dataset.articleId;
-            const icon = btn.querySelector('.favorite-icon');
-
-            if (btn.classList.contains('btn-warning')) {
-                // Already favorited → unfavorite
-                btn.classList.remove('btn-warning');
-                btn.classList.add('btn-outline-warning');
-                icon.textContent = '⭐';
-                sendInteraction('unfavorite', articleId);
-            } else {
-                // Favorite it
-                btn.classList.add('btn-warning');
-                btn.classList.remove('btn-outline-warning');
-                icon.textContent = '🌟';
-                sendInteraction('favorites', articleId);
-            }
-        });
-    });
-
-    // Time spent tracking on single article page (optional)
-    const articleId = "{{ article.id|default:'' }}";
-    if (articleId) {
-        let secondsSpent = 0;
-        setInterval(() => {
-            secondsSpent += 10;
-            sendInteraction('time_spent', { article_id: articleId, seconds: secondsSpent });
-            secondsSpent = 0; // reset after sending
-        }, 10000);  // every 10 seconds
-    }
+    
 });
 </script>
 

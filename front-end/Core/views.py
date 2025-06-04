@@ -10,7 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from . forms import *
+from . views import *
 from django.http import JsonResponse
+import datetime
+
 
 
 DATA_PATH = os.path.join('data', 'users.json')
@@ -46,27 +49,20 @@ INTERACTION_FILE = os.path.join('data', 'user_interractions.json')
 
 def home_view(request):
     username = request.session.get('user', 'DemoUser')
-    
-    try:
-        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
-            preferences = json.load(f).get(username, [])
-        liked_ids = [p['article_id'] for p in preferences if p['response'] == 'interested']
-    except:
-        liked_ids = []
+    rec_file = os.path.join('data', f'{username}_custom_recommendations.json')
 
     try:
-        with open(ARTICLE_PATH, 'r') as f:
-            all_articles = json.load(f)
-    except:
-        all_articles = []
+        with open(rec_file, 'r') as f:
+            articles = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        articles = []
 
-    personalized = [a for a in all_articles if a['id'] in liked_ids]
-    default = all_articles[:3]
-    
     context = {
-        'articles': personalized if personalized else default
+        'articles': articles,
+        'username': username
     }
     return render(request, 'home.html', context)
+
 
 
 def has_completed_onboarding(username):
@@ -191,6 +187,28 @@ def signup_view(request):
             with open(DATA_PATH, 'w') as f:
                 json.dump(users, f, indent=4)
                 
+            # Path to user activity file
+                USER_ACTIVITY_PATH = os.path.join('data', 'user_activity.json')
+
+                # Ensure file exists
+                if not os.path.exists(USER_ACTIVITY_PATH):
+                    with open(USER_ACTIVITY_PATH, 'w') as f:
+                        json.dump({}, f)
+
+                # Load existing data
+                with open(USER_ACTIVITY_PATH, 'r') as f:
+                    try:
+                        activity_data = json.load(f)
+                    except json.JSONDecodeError:
+                        activity_data = {}
+
+                # Add blank activity record for the new user
+                activity_data[new_user['username']] = {}
+
+                with open(USER_ACTIVITY_PATH, 'w') as f:
+                    json.dump(activity_data, f, indent=4)
+                    
+                                
             # After saving user
             ai_output_file = os.path.join('data', f"{new_user['username']}_recommendations.json")
 
@@ -253,12 +271,6 @@ def onboarding_view(request, username):
         return JsonResponse({'error': 'Recommendations not found'}, status=404)
 
     try:
-        # with open(rec_file, 'r') as f:
-        #     articles = json.load(f)
-        #     print("=== DEBUG: articles ===", type(articles), articles)
-        #     if isinstance(articles, dict):
-        #         articles = list(articles.values())
-        # if not isinstance(articles, list) or not articles:
         #     return JsonResponse({'error': 'No valid recommendations found.'}, status=500)
         with open(rec_file, 'r') as f:
             articles = json.load(f)
@@ -296,35 +308,6 @@ def onboarding_view(request, username):
 
 # @csrf_exempt
 # @require_http_methods(["POST"])
-# def onboarding_response_view(request):
-#     data = json.loads(request.body)
-#     username = data.get('username')
-#     article_id = data.get('article_id')
-#     response = data.get('response')  # interested / not_interested
-
-#     if not username or not article_id or not response:
-#         return JsonResponse({'error': 'Incomplete data'}, status=400)
-
-#     if not os.path.exists(ONBOARDING_RESPONSES_PATH):
-#         with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
-#             json.dump({}, f)
-
-#     with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
-#         responses = json.load(f)
-
-#     if username not in responses:
-#         responses[username] = []
-
-#     responses[username].append({
-#         'article_id': article_id,
-#         'response': response
-#     })
-
-#     with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
-#         json.dump(responses, f, indent=4)
-
-#     return JsonResponse({'status': 'recorded'})
-
 def onboarding_response_view(request):
     try:
         data = json.loads(request.body)
@@ -336,15 +319,16 @@ def onboarding_response_view(request):
             return JsonResponse({'error': 'Incomplete data'}, status=400)
 
         # Ensure the data folder exists
-        os.makedirs(os.path.dirname(ONBOARDING_RESPONSES_PATH), exist_ok=True)
+        response_file_path = os.path.join('data', f'onboarding_{username}_responses.json')
+        os.makedirs(os.path.dirname(response_file_path), exist_ok=True)
 
         # If file doesn't exist or is empty, initialize it
-        if not os.path.exists(ONBOARDING_RESPONSES_PATH) or os.path.getsize(ONBOARDING_RESPONSES_PATH) == 0:
-            with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+        if not os.path.exists(response_file_path) or os.path.getsize(response_file_path) == 0:
+            with open(response_file_path, 'w') as f:
                 json.dump({}, f)
 
         # Load existing responses safely
-        with open(ONBOARDING_RESPONSES_PATH, 'r') as f:
+        with open(response_file_path, 'r') as f:
             try:
                 responses = json.load(f)
             except json.JSONDecodeError:
@@ -360,7 +344,7 @@ def onboarding_response_view(request):
         })
 
         # Save back
-        with open(ONBOARDING_RESPONSES_PATH, 'w') as f:
+        with open(response_file_path, 'w') as f:
             json.dump(responses, f, indent=4)
 
         return JsonResponse({'status': 'recorded'})
@@ -534,4 +518,103 @@ def upload_article_view(request):
     return render(request, 'upload_article.html', {'form': form})
 
 
+@csrf_exempt
+# def record_user_action(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             username = data['username']
+#             article_id = str(data['article_id'])  # ensure it's a string
+#             action = data['action']  # e.g., "click", "like", "favourite"
 
+#             USER_ACTIVITY_PATH = os.path.join('data', 'user_activity.json')
+#             with open(USER_ACTIVITY_PATH, 'r') as f:
+#                 activity_data = json.load(f)
+
+#             # Ensure user exists
+#             if username not in activity_data:
+#                 return JsonResponse({'status': 'error', 'message': 'User not found'}, status=400)
+
+#             # Get user's activity
+#             user_data = activity_data.get(username, {})
+#             article_data = user_data.get(article_id, {
+#                 "clicks": [],
+#                 "likes": [],
+#                 "favorites": [],
+#                 "time_spent": [],
+#                 "searches": [],
+#                 "last_active": str(datetime.datetime.now())
+#             })
+
+#             # Update action
+#             if action == "click":
+#                 article_data["clicks"].append("1")
+#             elif action == "like":
+#                 article_data["likes"].append("1")
+#             elif action == "dislike":
+#                 article_data["likes"].append("0")
+#             elif action == "favourite":
+#                 article_data["favorites"].append("1")
+
+#             article_data["last_active"] = str(datetime.datetime.now())
+#             user_data[article_id] = article_data
+#             activity_data[username] = user_data
+
+#             # Save
+#             with open(USER_ACTIVITY_PATH, 'w') as f:
+#                 json.dump(activity_data, f, indent=4)
+
+#             return JsonResponse({'status': 'success'})
+
+#         except Exception as e:
+#             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+# def record_user_interaction(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         username = data.get('username')
+#         article_id = data.get('article_id')
+#         action = data.get('action')
+
+#         user_data_path = os.path.join('data', f"{username}_interactions.json")
+
+#         if not os.path.exists(user_data_path):
+#             with open(user_data_path, 'w') as f:
+#                 json.dump([], f)
+
+#         with open(user_data_path, 'r') as f:
+#             try:
+#                 interactions = json.load(f)
+#             except json.JSONDecodeError:
+#                 interactions = []
+
+#         interactions.append({
+#             "article_id": article_id,
+#             "action": action,
+#             "timestamp": datetime.now().isoformat()
+#         })
+
+#         with open(user_data_path, 'w') as f:
+#             json.dump(interactions, f, indent=4)
+
+#         return JsonResponse({"status": "ok", "msg": f"{action} recorded."})
+#     return JsonResponse({"status": "error", "msg": "Invalid request"}, status=400)
+
+
+def record_user_interaction(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        article_id = data.get('article_id')
+        action = data.get('action')
+
+        try:
+            user = User.objects.get(username=username)
+            profile = user.userprofile
+            profile.update_activity(article_id, action)
+            return JsonResponse({"status": "ok", "msg": f"{action} recorded for article {article_id}."})
+        except User.DoesNotExist:
+            return JsonResponse({"status": "error", "msg": "User not found."}, status=404)
+
+    return JsonResponse({"status": "error", "msg": "Invalid request"}, status=400)

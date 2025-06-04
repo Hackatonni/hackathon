@@ -41,3 +41,4 @@ class ArticleUploadForm(forms.Form):
     abstract = forms.CharField(widget=forms.Textarea)
     content = forms.CharField(widget=forms.Textarea)
     tags = forms.CharField(help_text="Comma-separated tags (e.g., AI, Robotics, Research)")
+
